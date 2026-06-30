@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Program OS · Live Demo · Kris Kassem</title>
+<style>
+  /* Demo banner */
+  .demo-banner {
+    position: sticky;
+    top: 0;
+    z-index: 9999;
+    background: #fbbf24;
+    color: #0A2540;
+    padding: 12px 24px;
+    font-weight: 700;
+    font-size: 13px;
+    text-align: center;
+    border-bottom: 2px solid #0A2540;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .demo-banner a {
+    color: #0A2540;
+    text-decoration: underline;
+    font-weight: 800;
+  }
+  .demo-banner button {
+    background: #0A2540;
+    color: #fff;
+    border: 0;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .demo-banner button:hover { background: #1e3a5f; }
+</style>
+</head>
+<body>
+
+<!-- Demo banner -->
+<div class="demo-banner">
+  <span>🟡 LIVE DEMO · Sample data pre-loaded · Changes save to your browser only</span>
+  <button onclick="resetDemo()">Reset to Sample Data</button>
+  <a href="https://kris-kassem.gumroad.com/l/ai-program-os" target="_blank">Get the Full Version →</a>
+</div>
+
+<!-- The OS iframe -->
+<iframe src="index.html" style="width:100%; height:calc(100vh - 50px); border:0; display:block;" id="os-frame"></iframe>
+
+<script>
+// Pre-load sample data on first visit, then leave alone after that
+const SAMPLE_DATA_KEY = 'ai_program_os_demo_v1';
+const PROD_KEY = 'ai_program_os_v1';
+
+function loadSampleData() {
+  return {
+    charter: {
+      name: 'AI Contact Centre Copilot — Phase 1',
+      sponsor: 'Sarah Chen, SVP Customer Operations',
+      lead: 'Marcus Wong, Program Director',
+      business: 'David Park, VP Contact Centre',
+      risk: 'Priya Sharma, Director Risk',
+      decision: 'Recommend the next-best-action to a contact-centre agent within the first 30 seconds of a customer call.',
+      counterfactual: 'Today: agents use a static prompt library and tribal knowledge. Average handle time is 6.4 minutes, first-call resolution is 71%, and the average cost per call is $7.80 fully loaded.',
+      outcome: 'Reduce average handle time by 45 seconds; lift first-call resolution to 78%; reduce repeat calls within 7 days by 12%.',
+      boundary: 'Cannot override regulatory disclosures; cannot recommend ineligible products; cannot persist PII beyond the active session.',
+      trust: 'Recommendation relevance ≥ 0.78 on held-out test set; P95 latency ≤ 800ms; bias ceiling measured monthly across age, region, and language; drift threshold triggers retraining at KL divergence > 0.15.',
+      funding: '18 months committed — $1.4M build, $700K run in Year 1',
+      steercoDate: new Date(Date.now() + 11 * 86400000).toISOString().slice(0, 10),
+      steercoCadence: 'Bi-weekly',
+      kill: '1. Adoption below 60% by month 4\n2. FCR regression below baseline at month 6\n3. Regulatory finding against the model within the first 12 months'
+    },
+    stakeholders: [
+      { id: 's1', name: 'Sarah Chen', role: 'SVP Customer Operations (Sponsor)', influence: 'High', interest: 'High', lastContact: new Date(Date.now() - 3*86400000).toISOString().slice(0,10), sentiment: 'Champion', nextAction: 'Pre-SteerCo briefing Tuesday' },
+      { id: 's2', name: 'David Park', role: 'VP Contact Centre', influence: 'High', interest: 'High', lastContact: new Date(Date.now() - 1*86400000).toISOString().slice(0,10), sentiment: 'Supporter', nextAction: 'Walk through agent evaluation results' },
+      { id: 's3', name: 'Priya Sharma', role: 'Director Risk', influence: 'High', interest: 'Medium', lastContact: new Date(Date.now() - 7*86400000).toISOString().slice(0,10), sentiment: 'Skeptic', nextAction: 'Address bias measurement methodology concerns' },
+      { id: 's4', name: 'James Liu', role: 'CIO', influence: 'High', interest: 'Low', lastContact: new Date(Date.now() - 14*86400000).toISOString().slice(0,10), sentiment: 'Neutral', nextAction: 'Quarterly update next month' },
+      { id: 's5', name: 'Aisha Patel', role: 'Head of Compliance', influence: 'Medium', interest: 'Medium', lastContact: new Date(Date.now() - 5*86400000).toISOString().slice(0,10), sentiment: 'Supporter', nextAction: 'Review regulatory notification template' },
+      { id: 's6', name: 'Tom Becker', role: 'Union Representative (Contact Centre)', influence: 'Medium', interest: 'High', lastContact: new Date(Date.now() - 10*86400000).toISOString().slice(0,10), sentiment: 'Blocker', nextAction: 'Coffee to discuss agent impact on agent roles' },
+    ],
+    vendors: [
+      { id: 'v1', name: 'LLM Provider A', what: 'Foundation model API (chat)', annual: '$240K', renewal: '2027-03-15', risk: 'Medium', exitClause: '90-day notice, data export included' },
+      { id: 'v2', name: 'Vector DB Vendor B', what: 'Embedding store + retrieval', annual: '$80K', renewal: '2026-12-01', risk: 'Low', exitClause: '30-day notice, standard export' },
+      { id: 'v3', name: 'Observability Platform C', what: 'Agent tracing + eval', annual: '$120K', renewal: '2027-06-30', risk: 'Low', exitClause: '60-day notice, OTLP-compatible export' },
+    ],
+    raid: [
+      { id: 'r1', type: 'Risk', description: 'LLM provider may deprecate the model version we standardized on, forcing re-evaluation within 6 months.', owner: 'Marcus Wong', severity: 'High', status: 'In Progress', action: 'Build model-portability layer; eval second provider Q3' },
+      { id: 'r2', type: 'Risk', description: 'Bias audit may reveal performance gaps across protected attributes, blocking production deployment.', owner: 'Priya Sharma', severity: 'High', status: 'Open', action: 'Run extended bias evaluation by month 3; pre-align with risk' },
+      { id: 'r3', type: 'Risk', description: 'Adoption below 60% by month 4 if change management is not adequately resourced.', owner: 'David Park', severity: 'Medium', status: 'In Progress', action: 'Hire dedicated change lead; pilot with 50 agents first' },
+      { id: 'r4', type: 'Issue', description: 'Integration with CRM system is 6 weeks behind plan due to vendor resource constraints.', owner: 'Marcus Wong', severity: 'High', status: 'In Progress', action: 'Escalated to vendor exec sponsor; alternate integrator identified' },
+      { id: 'r5', type: 'Issue', description: 'Two of three pilot teams report low trust in recommendations, citing hallucination on edge cases.', owner: 'Aisha Patel', severity: 'Medium', status: 'In Progress', action: 'Tighten confidence threshold; add refusal escalation path' },
+      { id: 'r6', type: 'Assumption', description: 'Call transcripts are available in real-time with <2 second latency from IVR event to agent desktop.', owner: 'Marcus Wong', severity: 'Medium', status: 'Open', action: 'Validate with platform team; build monitoring' },
+      { id: 'r7', type: 'Dependency', description: 'Final regulatory notification template must be approved by Compliance before production deployment.', owner: 'Aisha Patel', severity: 'High', status: 'Open', action: 'Schedule review session week 2' },
+      { id: 'r8', type: 'Risk', description: 'Cost per inference may exceed forecast if token usage grows with prompt optimization.', owner: 'Marcus Wong', severity: 'Low', status: 'Open', action: 'Set budget alerts at 80% and 100% of monthly cap' },
+    ],
+    decisions: [
+      { id: 'd1', date: '2026-04-12', madeBy: 'Steering Committee', decision: 'Approve Phase 1 deployment to 50-agent pilot cohort for 8-week evaluation.', evidence: 'Charter sign-off; pilot success criteria defined; risk classification A1 confirmed.', status: 'Approved' },
+      { id: 'd2', date: '2026-05-03', madeBy: 'Sarah Chen (Sponsor)', decision: 'Bring external program recovery advisor in for week-6 health check.', evidence: 'Concerns flagged in 14-question diagnostic regarding adoption risk and stakeholder alignment.', status: 'Approved' },
+      { id: 'd3', date: '2026-06-15', madeBy: 'Risk + Compliance + Engineering', decision: 'Move kill switch from Slack-thread based to documented, tested procedure with quarterly drills.', evidence: 'Documented gap analysis against pack Section 4; reviewed and approved by all three functions.', status: 'Approved' },
+      { id: 'd4', date: '2026-07-01', madeBy: 'Pending — SteerCo', decision: 'Approve scale-up to 250-agent cohort based on pilot results.', evidence: 'Pending pilot completion; expected by next SteerCo.', status: 'Pending' },
+      { id: 'd5', date: '2026-06-20', madeBy: 'Engineering + Risk', decision: 'Increase recommendation-relevance trust floor from 0.72 to 0.78 based on pilot data showing higher accuracy reduces agent override rate.', evidence: 'Pilot metrics analysis; reviewed at week-4 governance review.', status: 'Approved' },
+    ],
+    scorecard: [
+      { id: 'sc1', quarter: '2026-Q1', strategy: '32', data: '28', tech: '30', grc: '22', talent: '34', delivery: '36', adoption: '20', vendor: '28', agentic: '18', comms: '26' },
+      { id: 'sc2', quarter: '2026-Q2', strategy: '38', data: '34', tech: '36', grc: '32', talent: '38', delivery: '40', adoption: '28', vendor: '34', agentic: '28', comms: '32' },
+    ],
+    weekly: {
+      date: new Date().toISOString().slice(0, 10),
+      rag: 'Amber',
+      progress: '• Pilot week 6 complete with 50 agents across two cohorts\n• Recommendation acceptance rate at 71% (target was 75%) — improving weekly\n• Two agent categories flagged low trust; tightening confidence threshold Friday\n• Regulator notification template approved by Compliance and Legal',
+      decisions: '1. SteerCo approval needed on scale-up to 250-agent cohort by next Friday\n2. CFO approval on Year 2 run-cost budget by end of month',
+      risks: '• CRM integration remains 6 weeks behind — escalated to vendor exec sponsor (Owner: Marcus Wong)\n• Bias audit methodology under review with Risk (Owner: Priya Sharma)\n• Adoption target at risk in pilot — 64% vs. 75% target (Owner: David Park)',
+      next: '1. Complete week-7 evaluation of tightened confidence threshold\n2. Run first quarterly kill switch drill (mandatory by Section 4)\n3. Decision prep package for next SteerCo on scale-up\n4. Begin second-provider evaluation per model-portability plan',
+      sentTo: 'sponsor@company.com, lead@company.com, business@company.com, risk@company.com',
+      sentAt: new Date().toLocaleString('en-CA'),
+    }
+  };
+}
+
+// On first load, inject sample data into localStorage that the iframe will read
+function seedSampleData() {
+  const existing = localStorage.getItem(PROD_KEY);
+  if (existing && !sessionStorage.getItem('demo_seeded')) {
+    // User has their own data — don't overwrite
+    return;
+  }
+  const sample = loadSampleData();
+  localStorage.setItem(PROD_KEY, JSON.stringify(sample));
+  sessionStorage.setItem('demo_seeded', '1');
+}
+
+// Reset to fresh sample data
+function resetDemo() {
+  if (!confirm('Reset to fresh sample data? Any changes you made will be lost.')) return;
+  sessionStorage.removeItem('demo_seeded');
+  localStorage.removeItem(PROD_KEY);
+  const sample = loadSampleData();
+  localStorage.setItem(PROD_KEY, JSON.stringify(sample));
+  sessionStorage.setItem('demo_seeded', '1');
+  document.getElementById('os-frame').contentWindow.location.reload();
+}
+
+// Inject sample data before the iframe loads
+seedSampleData();
+</script>
+
+</body>
+</html>

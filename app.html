@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Program Operating System · Kris Kassem</title>
+<style>
+  /* ============================================================
+     AI PROGRAM OPERATING SYSTEM
+     Single-file, offline-capable, localStorage persistence
+     ============================================================ */
+
+  :root {
+    --navy: #0A2540;
+    --navy-2: #1e3a5f;
+    --navy-3: #2d4a6f;
+    --amber: #fbbf24;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1f2937;
+    --slate-900: #0f172a;
+    --green: #16a34a;
+    --red: #dc2626;
+    --blue: #2563eb;
+    --orange: #ea580c;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+    background: var(--slate-50);
+    color: var(--slate-800);
+    font-size: 14px;
+    line-height: 1.55;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ----- Sidebar ----- */
+  .sidebar {
+    width: 240px;
+    background: var(--navy);
+    color: #fff;
+    flex-shrink: 0;
+    padding: 18px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .brand {
+    padding: 0 18px 18px;
+    border-bottom: 1px solid #1e3a5f;
+    margin-bottom: 12px;
+  }
+  .brand-mark {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #93c5fd;
+    font-weight: 700;
+  }
+  .brand-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-top: 4px;
+    color: #fff;
+  }
+  .nav-section {
+    padding: 8px 0;
+  }
+  .nav-label {
+    padding: 4px 18px;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 700;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 18px;
+    cursor: pointer;
+    color: #cbd5e1;
+    font-size: 13px;
+    border-left: 2px solid transparent;
+    transition: all 0.12s;
+  }
+  .nav-item:hover { background: var(--navy-2); color: #fff; }
+  .nav-item.active {
+    background: var(--navy-2);
+    border-left-color: var(--amber);
+    color: #fff;
+    font-weight: 600;
+  }
+  .nav-icon {
+    width: 16px; height: 16px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  /* ----- Main ----- */
+  .main {
+    flex: 1;
+    padding: 28px 36px;
+    max-width: 1200px;
+    overflow-x: hidden;
+  }
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--slate-200);
+  }
+  .page-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .page-sub {
+    color: var(--slate-500);
+    font-size: 13px;
+    margin: 0;
+  }
+  .page-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  /* ----- Buttons ----- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid var(--slate-300);
+    background: #fff;
+    color: var(--slate-700);
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s;
+    font-family: inherit;
+  }
+  .btn:hover { background: var(--slate-100); border-color: var(--slate-400); }
+  .btn-primary {
+    background: var(--navy);
+    color: #fff;
+    border-color: var(--navy);
+  }
+  .btn-primary:hover { background: var(--navy-2); border-color: var(--navy-2); }
+  .btn-amber {
+    background: var(--amber);
+    color: var(--navy);
+    border-color: var(--amber);
+  }
+  .btn-amber:hover { background: #f59e0b; }
+  .btn-danger {
+    background: #fff;
+    color: var(--red);
+    border-color: #fecaca;
+  }
+  .btn-danger:hover { background: #fef2f2; }
+  .btn-sm { padding: 4px 9px; font-size: 11px; }
+
+  /* ----- Cards & Layout ----- */
+  .card {
+    background: #fff;
+    border: 1px solid var(--slate-200);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--slate-500);
+    font-weight: 700;
+    margin: 0 0 12px;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+  /* ----- Forms ----- */
+  label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--slate-600);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  input[type="text"], input[type="date"], input[type="email"], input[type="number"],
+  select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--slate-300);
+    border-radius: 5px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--slate-800);
+    transition: border-color 0.12s;
+  }
+  textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(10, 37, 64, 0.08);
+  }
+  .form-row { margin-bottom: 12px; }
+  .form-row.inline {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* ----- Tables ----- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    text-align: left;
+    background: var(--slate-50);
+    color: var(--slate-600);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--slate-200);
+    font-weight: 700;
+  }
+  td {
+    padding: 10px;
+    border-bottom: 1px solid var(--slate-100);
+    vertical-align: top;
+  }
+  tr:hover td { background: var(--slate-50); }
+
+  /* ----- Badges ----- */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge-red { background: #fef2f2; color: var(--red); }
+  .badge-amber { background: #fffbeb; color: #b45309; }
+  .badge-green { background: #f0fdf4; color: var(--green); }
+  .badge-blue { background: #eff6ff; color: var(--blue); }
+  .badge-slate { background: var(--slate-100); color: var(--slate-600); }
+
+  /* ----- Dashboard tiles ----- */
+  .tile {
+    background: #fff;
+    border: 1px solid var(--slate-200);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .tile-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--slate-500);
+    font-weight: 700;
+  }
+  .tile-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 4px 0;
+    letter-spacing: -0.02em;
+  }
+  .tile-trend {
+    font-size: 11px;
+    color: var(--slate-500);
+  }
+
+  /* ----- RAG / severity ----- */
+  .rag-green { color: var(--green); font-weight: 700; }
+  .rag-amber { color: #b45309; font-weight: 700; }
+  .rag-red { color: var(--red); font-weight: 700; }
+
+  /* ----- Empty state ----- */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--slate-500);
+    font-size: 13px;
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.5; }
+
+  /* ----- Print ----- */
+  @media print {
+    .sidebar, .page-actions, .no-print { display: none !important; }
+    .main { padding: 0; max-width: 100%; }
+    body { background: #fff; }
+    .card { border: none; padding: 12px 0; }
+  }
+
+  /* ----- Modal ----- */
+  .modal-bg {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    z-index: 1000;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+  }
+  .modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 0 0 16px;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--slate-200);
+  }
+
+  /* ----- Toast ----- */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 13px;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.2s;
+    z-index: 2000;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">AI Delivery Practice</div>
+    <div class="brand-name">Program OS</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" data-view="dashboard">
+      <span class="nav-icon">▦</span> Dashboard
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Program</div>
+    <div class="nav-item" data-view="charter">
+      <span class="nav-icon">◆</span> Program Charter
+    </div>
+    <div class="nav-item" data-view="stakeholders">
+      <span class="nav-icon">◉</span> Stakeholders
+    </div>
+    <div class="nav-item" data-view="vendors">
+      <span class="nav-icon">⌬</span> Vendors
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Delivery</div>
+    <div class="nav-item" data-view="raid">
+      <span class="nav-icon">⚠</span> RAID Log
+    </div>
+    <div class="nav-item" data-view="weekly">
+      <span class="nav-icon">◐</span> Weekly Status
+    </div>
+    <div class="nav-item" data-view="steerco">
+      <span class="nav-icon">◈</span> Steering Committee
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Diagnostics</div>
+    <div class="nav-item" data-view="scorecard">
+      <span class="nav-icon">◢</span> Readiness Scorecard
+    </div>
+    <div class="nav-item" data-view="decisions">
+      <span class="nav-icon">⊕</span> Decision Log
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Settings</div>
+    <div class="nav-item" data-view="data">
+      <span class="nav-icon">⬚</span> Data (Import/Export)
+    </div>
+  </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+  <!-- ===== DASHBOARD ===== -->
+  <section id="view-dashboard" class="view">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title" id="dash-program-name">Your AI Program</h1>
+        <p class="page-sub" id="dash-program-sub">Set up your program charter to see live program health.</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-sm" onclick="OS.exportAll()">⬇ Export</button>
+        <button class="btn btn-primary btn-sm" onclick="OS.goto('charter')">Set Up Charter →</button>
+      </div>
+    </div>
+
+    <div class="grid-4">
+      <div class="tile">
+        <div class="tile-label">Overall RAG</div>
+        <div class="tile-value" id="dash-rag">—</div>
+        <div class="tile-trend" id="dash-rag-trend">Set up charter and RAID to track.</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">Open Risks</div>
+        <div class="tile-value" id="dash-risks">0</div>
+        <div class="tile-trend" id="dash-risks-trend">No risks logged.</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">Open Issues</div>
+        <div class="tile-value" id="dash-issues">0</div>
+        <div class="tile-trend" id="dash-issues-trend">No issues logged.</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">Days to Next SteerCo</div>
+        <div class="tile-value" id="dash-days">—</div>
+        <div class="tile-trend" id="dash-days-trend">Set next steerco date in charter.</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top: 16px;">
+      <div class="card">
+        <h3 class="card-title">Top 3 Risks (by severity)</h3>
+        <div id="dash-top-risks"></div>
+      </div>
+      <div class="card">
+        <h3 class="card-title">Decisions Awaiting SteerCo</h3>
+        <div id="dash-decisions"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">This Week at a Glance</h3>
+      <div id="dash-week"></div>
+    </div>
+  </section>
+
+  <!-- ===== CHARTER ===== -->
+  <section id="view-charter" class="view" style="display:none;">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Program Charter</h1>
+        <p class="page-sub">Single source of truth for what the program is, who owns it, and how it is measured.</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-sm" onclick="OS.reset('charter')">Reset</button>
+        <button class="btn btn-primary btn-sm" onclick="OS.save('charter')">Save Charter</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Identity</h3>
+      <div class="form-row">
+        <label>Program name</label>
+        <input type="text" id="ch-name" placeholder="e.g. AI Contact Centre Copilot" />
+      </div>
+      <div class="form-row inline">
+        <div>
+          <label>Sponsor</label>
+          <input type="text" id="ch-sponsor" placeholder="SVP / VP / Director name" />
+        </div>
+        <div>
+          <label>Delivery lead</label>
+          <input type="text" id="ch-lead" placeholder="Program Manager name" />
+        </div>
+      </div>
+      <div class="form-row inline">
+        <div>
+          <label>Business owner</label>
+          <input type="text" id="ch-business" placeholder="Head of function" />
+        </div>
+        <div>
+          <label>Risk lead</label>
+          <input type="text" id="ch-risk" placeholder="Risk / Compliance partner" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Outcome</h3>
+      <div class="form-row">
+        <label>The specific decision being automated (one sentence)</label>
+        <input type="text" id="ch-decision" placeholder="e.g. Recommend next-best-action to a contact-centre agent within 30 seconds of call start" />
+      </div>
+      <div class="form-row">
+        <label>Counterfactual — what does the organization do today, and what does it cost?</label>
+        <textarea id="ch-counterfactual" placeholder="Today: agents use static prompt library + tribal knowledge. Avg handle time 6.4 min, FCR 71%, fully-loaded cost $7.80/call."></textarea>
+      </div>
+      <div class="form-row">
+        <label>Quantified outcome (one delta against the counterfactual)</label>
+        <textarea id="ch-outcome" placeholder="Reduce avg handle time by 45 sec; lift FCR to 78%; reduce 7-day repeat calls by 12%."></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Boundaries & Governance</h3>
+      <div class="form-row">
+        <label>What the AI is NOT allowed to do (the negative space)</label>
+        <textarea id="ch-boundary" placeholder="e.g. Cannot override regulatory disclosures; cannot recommend ineligible products; cannot persist PII beyond session."></textarea>
+      </div>
+      <div class="form-row inline">
+        <div>
+          <label>Trust floor (minimum acceptable performance)</label>
+          <input type="text" id="ch-trust" placeholder="e.g. relevance ≥ 0.78, P95 latency ≤ 800ms" />
+        </div>
+        <div>
+          <label>Funding horizon</label>
+          <input type="text" id="ch-funding" placeholder="18 months committed" />
+        </div>
+      </div>
+      <div class="form-row inline">
+        <div>
+          <label>Next steering committee date</label>
+          <input type="date" id="ch-steerco-date" />
+        </div>
+        <div>
+          <label>SteerCo cadence</label>
+          <select id="ch-steerco-cadence">
+            <option>Weekly</option>
+            <option selected>Bi-weekly</option>
+            <option>Monthly</option>
+            <option>Quarterly</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Kill Criteria (the three conditions that stop the program)</h3>
+      <div class="form-row">
+        <textarea id="ch-kill" placeholder="1. Adoption below 60% by month 4&#10;2. Trust floor breached twice in any 90-day window&#10;3. Quantified benefit tracking below 50% of forecast at 9-month checkpoint"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== STAKEHOLDERS ===== -->
+  <section id="view-stakeholders" class="view" style="display:none;">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Stakeholders</h1>
+        <p class="page-sub">Map the people whose work changes — and the people whose decisions the program depends on.</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary btn-sm" onclick="OS.openStakeholderModal()">+ Add Stakeholder</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <table id="tbl-stakeholders">
+        <thead>
+          <tr>
+            <th>Name</th><th>Role</th><th>Influence</th><th>Interest</th>
+            <th>Last Contact</th><th>Sentiment</th><th>Next Action</th><th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="empty-stakeholders" class="empty" style="display:none;">
+        <div class="empty-icon">◉</div>
+        No stakeholders yet. Add the people whose work the program changes.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VENDORS ===== -->
+  <section id="view-vendors" class="view" style="display:none;">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Vendors</h1>
+        <p class="page-sub">Every external dependency the program relies on. If you cannot name the exit clause, you do not have a vendor — you have a hostage situation.</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary btn-sm" onclick="OS.openVendorModal()">+ Add Vendor</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <table id="tbl-vendors">
+        <thead>
+          <tr>
+            <th>Vendor</th><th>What They Provide</th><th>Annual $</th>
+            <th>Renewal</th><th>Risk</th><th>Exit Clause</th><th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="empty-vendors" class="empty" style="display:none;">
+        <div class="empty-icon">⌬</div>
+        No vendors yet. Add every external dependency.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RAID ===== -->
+  <section id="view-raid" class="view" style="display:none;">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">RAID Log</h1>
+        <p class="page-sub">Risks, Assumptions, Issues, Dependencies. Reviewed weekly. The single most important operational document.</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-sm" onclick="OS.exportRAID()">⬇ Export CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="OS.openRAIDModal()">+ Add Item</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; gap:8px; margin-bottom: 12px;">
+        <button class="btn btn-sm" onclick="OS.filterRAID('all')">All</button>
+        <button class="btn btn-sm" onclick="OS.filterRAID('Risk')">Risks</button>
+        <button class="btn btn-sm" onclick="OS.filterRAID('Assumption')">Assumptions</button>
+        <button class="btn btn-sm" onclick="OS.filterRAID('Issue')">Issues</button>
+        <button class="btn btn-sm" onclick="OS.filterRAID('Dependency')">Dependencies</button>
+      </div>
+      <table id="tbl-raid">
+        <thead>
+          <tr>
+            <th>Type</th><th>Description</th><th>Owner</th>
+            <th>Severity</th><th>Status</th><th>Action / Mitigation</th><th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="empty-raid" class="empty" style="display:none;">
+        <div class="empty-icon">⚠</div>
+        No RAID items yet. Add the risks, assumptions, issues, and dependencies the program is tracking.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== WEEKLY STATUS ===== -->
+  <section id="view-weekly" class="view" style="display:none;">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Weekly Status</h1>
+        <p class="page-sub">Auto-pre-filled from the charter and RAID. Edit before sending Friday 5pm.</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-sm" onclick="OS.exportWeekly()">⬇ Export Markdown</button>
+        <button class="btn btn-primary btn-sm" onclick="OS.saveWeekly()">Save Week</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="form-row inline">
+        <div>
+          <label>Week ending</label>
+          <input type="date" id="wk-date" />
+        </div>
+        <div>
+          <label>Overall RAG this week</label>
+          <select id="wk-rag">
+            <option value="Green">Green — on track</option>
+            <option value="Amber" selected>Amber — at risk, manageable</option>
+            <option value="Red">Red — escalation needed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Progress this week (what actually moved)</label>
+        <textarea id="wk-progress" rows="4" placeholder="Bullet list. Be specific. 'Stakeholder alignment workshop ran with 12 attendees, surfaced 4 unresolved dependencies.' Not 'Made progress.'"></textarea>
+      </div>
+
+      <div class="form-row">
+        <label>Decisions needed (from you or others, by when)</label>
+        <textarea id="wk-decisions" rows="3" placeholder="1. CFO approval on $X budget item by Wed 5pm&#10;2. Risk lead sign-off on data classification by Fri"></textarea>
+      </div>
+
+      <div class="form-row">
+        <label>Risks escalating this week</label>
+        <textarea id="wk-risks" rows="3" placeholder="Auto-pulled from RAID. Add context here."></textarea>
+      </div>
+
+      <div class="form-row">
+        <label>Next week — top 3 priorities</label>
+        <textarea id="wk-next" rows="3" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea>
+      </div>
+
+      <div class="form-row inline">
+        <div>
+          <label>Sent to (comma-separated)</label>
+          <input type="text" id="wk-sent-to" placeholder="sponsor@company.com, lead@company.com" />
+        </div>
+        <div>
+          <label>Sent at</label>
+          <input type="text" id="wk-sent-at" placeholder="auto-filled when saved" readonly />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== STEERCO ===== -->
+  <section id="view-steerco" class="view" style="display:none;">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Steering Committee Pack</h1>
+        <p class="page-sub">Auto-generated one-pager for the next steering committee. Print, send, defend.</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-sm" onclick="window.print()">⎙ Print / PDF</button>
+        <button class="btn btn-primary btn-sm" onclick="OS.copySteerCo()">⧉ Copy as Markdown</button>
+      </div>
+    </div>
+
+    <div class="card" id="steerco-doc">
+      <div id="steerco-content"></div>
+    </div>
+  </section>
+
+  <!-- ===== SCORECARD ===== -->
+  <section id="view-scorecard" class="view" style="display:none;">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Readiness Scorecard Tracker</h1>
+        <p class="page-sub">Quarterly scores. The delta is the point — track the trend, not the absolute.</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary btn-sm" onclick="OS.openScorecardModal()">+ Add Quarterly Score</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <table id="tbl-scorecard">
+        <thead>
+          <tr>
+            <th>Quarter</th><th>Total</th><th>Band</th>
+            <th>Strategy</th><th>Data</th><th>Tech</th><th>GRC</th>
+            <th>Talent</th><th>Delivery</th><th>Adoption</th>
+            <th>Vendor</th><th>Agentic</th><th>Comms</th><th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="empty-scorecard" class="empty" style="display:none;">
+        <div class="empty-icon">◢</div>
+        No quarterly scores logged. Run the 50-Point AI Readiness Scorecard with your delivery lead and add the first quarter here.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== DECISIONS ===== -->
+  <section id="view-decisions" class="view" style="display:none;">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Decision Log</h1>
+        <p class="page-sub">Every decision made on the program, who made it, when, and what evidence it rested on.</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary btn-sm" onclick="OS.openDecisionModal()">+ Add Decision</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <table id="tbl-decisions">
+        <thead>
+          <tr>
+            <th>Date</th><th>Decision</th><th>Made By</th>
+            <th>Evidence</th><th>Status</th><th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="empty-decisions" class="empty" style="display:none;">
+        <div class="empty-icon">⊕</div>
+        No decisions logged. The first entry is usually the charter sign-off.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== DATA I/O ===== -->
+  <section id="view-data" class="view" style="display:none;">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Data (Import / Export)</h1>
+        <p class="page-sub">All data is stored in your browser's localStorage. Export regularly. Clearing browser data clears the OS.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Export</h3>
+      <p style="font-size:13px; color: var(--slate-600);">Download every module as a single JSON file. Use this for backup, or to import on another machine.</p>
+      <button class="btn btn-primary" onclick="OS.exportAll()">⬇ Export All Data (JSON)</button>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Import</h3>
+      <p style="font-size:13px; color: var(--slate-600);">Load a previously exported JSON file. <strong>Warning:</strong> importing will replace current data.</p>
+      <input type="file" id="import-file" accept=".json" style="margin-bottom: 12px;" />
+      <br><button class="btn btn-primary" onclick="OS.importAll()">Import</button>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Reset</h3>
+      <p style="font-size:13px; color: var(--slate-600);">Clear all data and start fresh. Cannot be undone.</p>
+      <button class="btn btn-danger" onclick="OS.resetAll()">⚠ Delete All Data</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== MODAL ===================== -->
+<div id="modal-bg" class="modal-bg" onclick="if(event.target===this)OS.closeModal()">
+  <div class="modal">
+    <h2 id="modal-title" class="modal-title">Add Item</h2>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="OS.closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ============================================================
+   AI PROGRAM OS — Application Logic
+   ============================================================ */
+
+const OS = {
+  STORAGE_KEY: 'ai_program_os_v1',
+  currentView: 'dashboard',
+  raidFilter: 'all',
+
+  // ---------- Storage ----------
+  data: {
+    charter: {},
+    stakeholders: [],
+    vendors: [],
+    raid: [],
+    decisions: [],
+    scorecard: [],
+    weekly: {}
+  },
+
+  load() {
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        this.data = { ...this.data, ...parsed };
+      }
+    } catch (e) { console.warn('Load failed:', e); }
+  },
+
+  persist() {
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
+    } catch (e) { console.warn('Persist failed:', e); }
+  },
+
+  // ---------- Navigation ----------
+  goto(view) {
+    document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+    document.getElementById('view-' + view).style.display = 'block';
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector(`.nav-item[data-view="${view}"]`)?.classList.add('active');
+    this.currentView = view;
+    this.refresh(view);
+    window.scrollTo(0, 0);
+  },
+
+  refresh(view) {
+    if (view === 'dashboard') this.renderDashboard();
+    if (view === 'charter') this.populateCharterForm();
+    if (view === 'stakeholders') this.renderStakeholders();
+    if (view === 'vendors') this.renderVendors();
+    if (view === 'raid') this.renderRAID();
+    if (view === 'weekly') this.prefillWeekly();
+    if (view === 'steerco') this.renderSteerCo();
+    if (view === 'scorecard') this.renderScorecard();
+    if (view === 'decisions') this.renderDecisions();
+  },
+
+  // ---------- Dashboard ----------
+  renderDashboard() {
+    const c = this.data.charter;
+    document.getElementById('dash-program-name').textContent = c.name || 'Your AI Program';
+    document.getElementById('dash-program-sub').textContent = c.decision
+      ? c.decision.slice(0, 100) + (c.decision.length > 100 ? '…' : '')
+      : 'Set up your program charter to see live program health.';
+
+    // RAG from latest weekly
+    document.getElementById('dash-rag').innerHTML = this.data.weekly.rag
+      ? `<span class="rag-${this.data.weekly.rag.toLowerCase()}">${this.data.weekly.rag}</span>`
+      : '—';
+
+    const openRisks = this.data.raid.filter(r => r.type === 'Risk' && r.status !== 'Closed').length;
+    const openIssues = this.data.raid.filter(r => r.type === 'Issue' && r.status !== 'Closed').length;
+    document.getElementById('dash-risks').textContent = openRisks;
+    document.getElementById('dash-issues').textContent = openIssues;
+    document.getElementById('dash-risks-trend').textContent = openRisks === 0 ? 'No risks logged.' : `Across ${new Set(this.data.raid.filter(r=>r.type==='Risk').map(r=>r.owner)).size} owners.`;
+    document.getElementById('dash-issues-trend').textContent = openIssues === 0 ? 'No issues logged.' : `${this.data.raid.filter(r=>r.type==='Issue'&&r.severity==='High').length} high severity.`;
+
+    // Days to steerco
+    if (c.steercoDate) {
+      const days = Math.ceil((new Date(c.steercoDate) - new Date()) / 86400000);
+      document.getElementById('dash-days').textContent = days > 0 ? days : (days === 0 ? 'Today' : `${Math.abs(days)} ago`);
+      document.getElementById('dash-days-trend').textContent = c.steercoCadence ? `${c.steercoCadence} cadence.` : '';
+    }
+
+    // Top 3 risks
+    const topRisks = this.data.raid
+      .filter(r => r.type === 'Risk' && r.status !== 'Closed')
+      .sort((a,b) => ({High:3, Medium:2, Low:1}[b.severity]||0) - ({High:3, Medium:2, Low:1}[a.severity]||0))
+      .slice(0, 3);
+    document.getElementById('dash-top-risks').innerHTML = topRisks.length
+      ? topRisks.map(r => `<div style="padding:8px 0; border-bottom:1px solid var(--slate-100);">
+          <span class="badge badge-${r.severity==='High'?'red':r.severity==='Medium'?'amber':'green'}">${r.severity}</span>
+          <strong>${r.description.slice(0,80)}${r.description.length>80?'…':''}</strong>
+          <div style="font-size:11px; color: var(--slate-500); margin-top:2px;">Owner: ${r.owner||'Unassigned'}</div>
+        </div>`).join('')
+      : '<div class="empty">No open risks.</div>';
+
+    // Decisions awaiting
+    const pendingDecisions = this.data.decisions.filter(d => d.status === 'Pending');
+    document.getElementById('dash-decisions').innerHTML = pendingDecisions.length
+      ? pendingDecisions.map(d => `<div style="padding:8px 0; border-bottom:1px solid var(--slate-100);">
+          <strong>${d.decision.slice(0,80)}${d.decision.length>80?'…':''}</strong>
+          <div style="font-size:11px; color: var(--slate-500);">Owner: ${d.madeBy||'Unassigned'} · ${d.date||''}</div>
+        </div>`).join('')
+      : '<div class="empty">No pending decisions.</div>';
+
+    // Week at a glance
+    const w = this.data.weekly;
+    document.getElementById('dash-week').innerHTML = (w.progress || w.next || w.decisions)
+      ? `<div style="font-size:13px; line-height:1.7;">
+          <p><strong>Progress:</strong> ${(w.progress||'—').replace(/\n/g,'<br>')}</p>
+          <p><strong>Decisions needed:</strong> ${(w.decisions||'—').replace(/\n/g,'<br>')}</p>
+          <p><strong>Next week:</strong> ${(w.next||'—').replace(/\n/g,'<br>')}</p>
+        </div>`
+      : '<div class="empty">No weekly status saved yet.</div>';
+  },
+
+  // ---------- Charter ----------
+  populateCharterForm() {
+    const c = this.data.charter;
+    const fields = ['name','sponsor','lead','business','risk','decision','counterfactual','outcome','boundary','trust','funding','steercoDate','steercoCadence','kill'];
+    fields.forEach(f => {
+      const el = document.getElementById('ch-' + f);
+      if (el) el.value = c[f] || '';
+    });
+  },
+
+  save(section) {
+    if (section === 'charter') {
+      const fields = ['name','sponsor','lead','business','risk','decision','counterfactual','outcome','boundary','trust','funding','steercoDate','steercoCadence','kill'];
+      this.data.charter = {};
+      fields.forEach(f => {
+        const el = document.getElementById('ch-' + f);
+        if (el) this.data.charter[f] = el.value;
+      });
+      this.persist();
+      this.toast('Charter saved.');
+      this.goto('dashboard');
+    }
+  },
+
+  reset(section) {
+    if (!confirm('Reset all charter fields? This cannot be undone.')) return;
+    this.data.charter = {};
+    this.persist();
+    this.populateCharterForm();
+    this.toast('Charter reset.');
+  },
+
+  // ---------- CRUD helpers ----------
+  uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); },
+
+  renderStakeholders() {
+    const tb = document.querySelector('#tbl-stakeholders tbody');
+    tb.innerHTML = '';
+    document.getElementById('empty-stakeholders').style.display = this.data.stakeholders.length ? 'none' : 'block';
+    this.data.stakeholders.forEach(s => {
+      const sentBadge = {Champion:'badge-green', Supporter:'badge-green', Neutral:'badge-slate', Skeptic:'badge-amber', Blocker:'badge-red'}[s.sentiment] || 'badge-slate';
+      tb.innerHTML += `<tr>
+        <td><strong>${esc(s.name)}</strong></td>
+        <td>${esc(s.role)}</td>
+        <td>${esc(s.influence)}</td>
+        <td>${esc(s.interest)}</td>
+        <td>${esc(s.lastContact)}</td>
+        <td><span class="badge ${sentBadge}">${esc(s.sentiment)}</span></td>
+        <td>${esc(s.nextAction)}</td>
+        <td><button class="btn btn-sm btn-danger" onclick="OS.deleteItem('stakeholders','${s.id}')">×</button></td>
+      </tr>`;
+    });
+  },
+
+  renderVendors() {
+    const tb = document.querySelector('#tbl-vendors tbody');
+    tb.innerHTML = '';
+    document.getElementById('empty-vendors').style.display = this.data.vendors.length ? 'none' : 'block';
+    this.data.vendors.forEach(v => {
+      const riskBadge = {Low:'badge-green', Medium:'badge-amber', High:'badge-red'}[v.risk] || 'badge-slate';
+      tb.innerHTML += `<tr>
+        <td><strong>${esc(v.name)}</strong></td>
+        <td>${esc(v.what)}</td>
+        <td>${esc(v.annual)}</td>
+        <td>${esc(v.renewal)}</td>
+        <td><span class="badge ${riskBadge}">${esc(v.risk)}</span></td>
+        <td>${esc(v.exitClause)}</td>
+        <td><button class="btn btn-sm btn-danger" onclick="OS.deleteItem('vendors','${v.id}')">×</button></td>
+      </tr>`;
+    });
+  },
+
+  filterRAID(type) {
+    this.raidFilter = type;
+    this.renderRAID();
+  },
+
+  renderRAID() {
+    const tb = document.querySelector('#tbl-raid tbody');
+    tb.innerHTML = '';
+    const items = this.raidFilter === 'all'
+      ? this.data.raid
+      : this.data.raid.filter(r => r.type === this.raidFilter);
+    document.getElementById('empty-raid').style.display = items.length ? 'none' : 'block';
+    items.forEach(r => {
+      const sevBadge = {High:'badge-red', Medium:'badge-amber', Low:'badge-green'}[r.severity] || 'badge-slate';
+      const statBadge = {Open:'badge-red', 'In Progress':'badge-amber', Closed:'badge-green'}[r.status] || 'badge-slate';
+      const typeBadge = {Risk:'badge-red', Assumption:'badge-blue', Issue:'badge-amber', Dependency:'badge-slate'}[r.type] || 'badge-slate';
+      tb.innerHTML += `<tr>
+        <td><span class="badge ${typeBadge}">${r.type}</span></td>
+        <td>${esc(r.description)}</td>
+        <td>${esc(r.owner)}</td>
+        <td><span class="badge ${sevBadge}">${esc(r.severity)}</span></td>
+        <td><span class="badge ${statBadge}">${esc(r.status)}</span></td>
+        <td>${esc(r.action)}</td>
+        <td><button class="btn btn-sm btn-danger" onclick="OS.deleteItem('raid','${r.id}')">×</button></td>
+      </tr>`;
+    });
+  },
+
+  renderDecisions() {
+    const tb = document.querySelector('#tbl-decisions tbody');
+    tb.innerHTML = '';
+    document.getElementById('empty-decisions').style.display = this.data.decisions.length ? 'none' : 'block';
+    this.data.decisions.forEach(d => {
+      const statBadge = {Pending:'badge-amber', Approved:'badge-green', Rejected:'badge-red'}[d.status] || 'badge-slate';
+      tb.innerHTML += `<tr>
+        <td>${esc(d.date)}</td>
+        <td>${esc(d.decision)}</td>
+        <td>${esc(d.madeBy)}</td>
+        <td>${esc(d.evidence)}</td>
+        <td><span class="badge ${statBadge}">${esc(d.status)}</span></td>
+        <td><button class="btn btn-sm btn-danger" onclick="OS.deleteItem('decisions','${d.id}')">×</button></td>
+      </tr>`;
+    });
+  },
+
+  renderScorecard() {
+    const tb = document.querySelector('#tbl-scorecard tbody');
+    tb.innerHTML = '';
+    document.getElementById('empty-scorecard').style.display = this.data.scorecard.length ? 'none' : 'block';
+    this.data.scorecard.forEach(s => {
+      const total = (parseInt(s.strategy||0)+parseInt(s.data||0)+parseInt(s.tech||0)+parseInt(s.grc||0)+parseInt(s.talent||0)+parseInt(s.delivery||0)+parseInt(s.adoption||0)+parseInt(s.vendor||0)+parseInt(s.agentic||0)+parseInt(s.comms||0));
+      const band = total < 100 ? 'Nascent' : total < 200 ? 'Forming' : total < 350 ? 'Operational' : total < 450 ? 'Scaling' : 'Leading';
+      const bandBadge = {Nascent:'badge-red', Forming:'badge-amber', Operational:'badge-blue', Scaling:'badge-green', Leading:'badge-green'}[band];
+      tb.innerHTML += `<tr>
+        <td><strong>${esc(s.quarter)}</strong></td>
+        <td><strong>${total}/500</strong></td>
+        <td><span class="badge ${bandBadge}">${band}</span></td>
+        <td>${esc(s.strategy)}</td><td>${esc(s.data)}</td><td>${esc(s.tech)}</td>
+        <td>${esc(s.grc)}</td><td>${esc(s.talent)}</td><td>${esc(s.delivery)}</td>
+        <td>${esc(s.adoption)}</td><td>${esc(s.vendor)}</td><td>${esc(s.agentic)}</td>
+        <td>${esc(s.comms)}</td>
+        <td><button class="btn btn-sm btn-danger" onclick="OS.deleteItem('scorecard','${s.id}')">×</button></td>
+      </tr>`;
+    });
+  },
+
+  deleteItem(collection, id) {
+    if (!confirm('Delete this item?')) return;
+    this.data[collection] = this.data[collection].filter(i => i.id !== id);
+    this.persist();
+    this.refresh(this.currentView);
+    this.toast('Deleted.');
+  },
+
+  // ---------- Modals ----------
+  openModal(title, bodyHTML, onSave) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = bodyHTML;
+    document.getElementById('modal-bg').classList.add('show');
+    document.getElementById('modal-save').onclick = onSave;
+  },
+
+  closeModal() {
+    document.getElementById('modal-bg').classList.remove('show');
+  },
+
+  openRAIDModal() {
+    const html = `
+      <div class="form-row"><label>Type</label>
+        <select id="m-type"><option>Risk</option><option>Assumption</option><option>Issue</option><option>Dependency</option></select>
+      </div>
+      <div class="form-row"><label>Description</label><textarea id="m-desc"></textarea></div>
+      <div class="form-row inline">
+        <div><label>Owner</label><input type="text" id="m-owner" /></div>
+        <div><label>Severity</label><select id="m-sev"><option>Low</option><option>Medium</option><option>High</option></select></div>
+      </div>
+      <div class="form-row inline">
+        <div><label>Status</label><select id="m-status"><option>Open</option><option>In Progress</option><option>Closed</option></select></div>
+        <div><label>Action / Mitigation</label><input type="text" id="m-action" /></div>
+      </div>`;
+    this.openModal('Add RAID Item', html, () => {
+      this.data.raid.push({
+        id: this.uid(),
+        type: v('m-type'),
+        description: v('m-desc'),
+        owner: v('m-owner'),
+        severity: v('m-sev'),
+        status: v('m-status'),
+        action: v('m-action'),
+      });
+      this.persist();
+      this.closeModal();
+      this.renderRAID();
+      this.toast('RAID item added.');
+    });
+  },
+
+  openStakeholderModal() {
+    const html = `
+      <div class="form-row"><label>Name</label><input type="text" id="m-name" /></div>
+      <div class="form-row"><label>Role / Title</label><input type="text" id="m-role" /></div>
+      <div class="form-row inline">
+        <div><label>Influence</label><select id="m-influence"><option>Low</option><option>Medium</option><option>High</option></select></div>
+        <div><label>Interest</label><select id="m-interest"><option>Low</option><option>Medium</option><option>High</option></select></div>
+      </div>
+      <div class="form-row inline">
+        <div><label>Last contact date</label><input type="date" id="m-last" /></div>
+        <div><label>Sentiment</label><select id="m-sent"><option>Champion</option><option>Supporter</option><option>Neutral</option><option>Skeptic</option><option>Blocker</option></select></div>
+      </div>
+      <div class="form-row"><label>Next action</label><input type="text" id="m-next" placeholder="e.g. Coffee Tuesday, walk through demo Friday" /></div>`;
+    this.openModal('Add Stakeholder', html, () => {
+      this.data.stakeholders.push({
+        id: this.uid(),
+        name: v('m-name'),
+        role: v('m-role'),
+        influence: v('m-influence'),
+        interest: v('m-interest'),
+        lastContact: v('m-last'),
+        sentiment: v('m-sent'),
+        nextAction: v('m-next'),
+      });
+      this.persist();
+      this.closeModal();
+      this.renderStakeholders();
+      this.toast('Stakeholder added.');
+    });
+  },
+
+  openVendorModal() {
+    const html = `
+      <div class="form-row"><label>Vendor name</label><input type="text" id="m-name" /></div>
+      <div class="form-row"><label>What they provide</label><input type="text" id="m-what" /></div>
+      <div class="form-row inline">
+        <div><label>Annual spend (or total contract value)</label><input type="text" id="m-annual" /></div>
+        <div><label>Renewal date</label><input type="date" id="m-renewal" /></div>
+      </div>
+      <div class="form-row inline">
+        <div><label>Risk level</label><select id="m-risk"><option>Low</option><option>Medium</option><option>High</option></select></div>
+        <div><label>Exit clause status</label><input type="text" id="m-exit" placeholder="e.g. 90-day notice, data export included" /></div>
+      </div>`;
+    this.openModal('Add Vendor', html, () => {
+      this.data.vendors.push({
+        id: this.uid(),
+        name: v('m-name'),
+        what: v('m-what'),
+        annual: v('m-annual'),
+        renewal: v('m-renewal'),
+        risk: v('m-risk'),
+        exitClause: v('m-exit'),
+      });
+      this.persist();
+      this.closeModal();
+      this.renderVendors();
+      this.toast('Vendor added.');
+    });
+  },
+
+  openDecisionModal() {
+    const html = `
+      <div class="form-row inline">
+        <div><label>Date</label><input type="date" id="m-date" /></div>
+        <div><label>Made by</label><input type="text" id="m-by" /></div>
+      </div>
+      <div class="form-row"><label>Decision</label><textarea id="m-decision"></textarea></div>
+      <div class="form-row"><label>Evidence the decision rested on</label><textarea id="m-evidence"></textarea></div>
+      <div class="form-row"><label>Status</label><select id="m-status"><option>Pending</option><option>Approved</option><option>Rejected</option></select></div>`;
+    this.openModal('Add Decision', html, () => {
+      this.data.decisions.push({
+        id: this.uid(),
+        date: v('m-date'),
+        madeBy: v('m-by'),
+        decision: v('m-decision'),
+        evidence: v('m-evidence'),
+        status: v('m-status'),
+      });
+      this.persist();
+      this.closeModal();
+      this.renderDecisions();
+      this.toast('Decision logged.');
+    });
+  },
+
+  openScorecardModal() {
+    const html = `
+      <div class="form-row"><label>Quarter (e.g. 2026-Q3)</label><input type="text" id="m-q" /></div>
+      <p style="font-size:12px; color: var(--slate-500);">Enter section totals (each out of 50, 10 sections total).</p>
+      <div class="grid-2">
+        <div class="form-row"><label>Strategy</label><input type="number" id="m-strategy" min="0" max="50" value="25" /></div>
+        <div class="form-row"><label>Data</label><input type="number" id="m-data" min="0" max="50" value="25" /></div>
+        <div class="form-row"><label>Tech</label><input type="number" id="m-tech" min="0" max="50" value="25" /></div>
+        <div class="form-row"><label>GRC</label><input type="number" id="m-grc" min="0" max="50" value="25" /></div>
+        <div class="form-row"><label>Talent</label><input type="number" id="m-talent" min="0" max="50" value="25" /></div>
+        <div class="form-row"><label>Delivery</label><input type="number" id="m-delivery" min="0" max="50" value="25" /></div>
+        <div class="form-row"><label>Adoption</label><input type="number" id="m-adoption" min="0" max="50" value="25" /></div>
+        <div class="form-row"><label>Vendor</label><input type="number" id="m-vendor" min="0" max="50" value="25" /></div>
+        <div class="form-row"><label>Agentic</label><input type="number" id="m-agentic" min="0" max="50" value="25" /></div>
+        <div class="form-row"><label>Comms</label><input type="number" id="m-comms" min="0" max="50" value="25" /></div>
+      </div>`;
+    this.openModal('Add Quarterly Score', html, () => {
+      this.data.scorecard.push({
+        id: this.uid(),
+        quarter: v('m-q'),
+        strategy: v('m-strategy'),
+        data: v('m-data'),
+        tech: v('m-tech'),
+        grc: v('m-grc'),
+        talent: v('m-talent'),
+        delivery: v('m-delivery'),
+        adoption: v('m-adoption'),
+        vendor: v('m-vendor'),
+        agentic: v('m-agentic'),
+        comms: v('m-comms'),
+      });
+      this.persist();
+      this.closeModal();
+      this.renderScorecard();
+      this.toast('Score added.');
+    });
+  },
+
+  // ---------- Weekly ----------
+  prefillWeekly() {
+    const w = this.data.weekly;
+    document.getElementById('wk-date').value = w.date || new Date().toISOString().slice(0,10);
+    document.getElementById('wk-rag').value = w.rag || 'Amber';
+    document.getElementById('wk-progress').value = w.progress || '';
+    document.getElementById('wk-decisions').value = w.decisions || '';
+    document.getElementById('wk-risks').value = w.risks || this.data.raid.filter(r => r.type === 'Risk' && r.severity === 'High' && r.status !== 'Closed').map(r => `• ${r.description} (Owner: ${r.owner || 'unassigned'})`).join('\n');
+    document.getElementById('wk-next').value = w.next || '';
+    document.getElementById('wk-sent-to').value = w.sentTo || '';
+    document.getElementById('wk-sent-at').value = w.sentAt || '';
+  },
+
+  saveWeekly() {
+    this.data.weekly = {
+      date: v('wk-date'),
+      rag: v('wk-rag'),
+      progress: v('wk-progress'),
+      decisions: v('wk-decisions'),
+      risks: v('wk-risks'),
+      next: v('wk-next'),
+      sentTo: v('wk-sent-to'),
+      sentAt: new Date().toLocaleString('en-CA'),
+    };
+    this.persist();
+    this.prefillWeekly();
+    this.toast('Weekly status saved.');
+  },
+
+  exportWeekly() {
+    const w = this.data.weekly;
+    const md = `# Weekly Status — Week ending ${w.date}\n\n**RAG:** ${w.rag}\n\n## Progress\n${w.progress || '—'}\n\n## Decisions needed\n${w.decisions || '—'}\n\n## Risks escalating\n${w.risks || '—'}\n\n## Next week\n${w.next || '—'}\n\n---\nSent to: ${w.sentTo}\nSent at: ${w.sentAt}\n`;
+    download('weekly-status-' + (w.date || 'draft') + '.md', md, 'text/markdown');
+  },
+
+  // ---------- SteerCo ----------
+  renderSteerCo() {
+    const c = this.data.charter;
+    const w = this.data.weekly;
+    const openRisks = this.data.raid.filter(r => r.type === 'Risk' && r.status !== 'Closed');
+    const highRisks = openRisks.filter(r => r.severity === 'High').length;
+    const pendingDecisions = this.data.decisions.filter(d => d.status === 'Pending').length;
+
+    document.getElementById('steerco-content').innerHTML = `
+      <div style="font-family: Georgia, serif;">
+        <h2 style="color: var(--navy); margin: 0 0 4px;">${esc(c.name) || 'Program Name'}</h2>
+        <p style="color: var(--slate-500); font-size: 12px; margin: 0 0 16px;">Steering Committee · ${c.steercoDate || 'Date TBD'} · ${c.steercoCadence || 'Bi-weekly'}</p>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 16px 0;">
+          <div style="border:1px solid var(--slate-200); padding:12px; border-radius:6px;">
+            <div style="font-size:10px; text-transform:uppercase; color: var(--slate-500); font-weight:700;">RAG</div>
+            <div style="font-size:22px; font-weight:700; color: var(--navy);">${w.rag || '—'}</div>
+          </div>
+          <div style="border:1px solid var(--slate-200); padding:12px; border-radius:6px;">
+            <div style="font-size:10px; text-transform:uppercase; color: var(--slate-500); font-weight:700;">Open Risks</div>
+            <div style="font-size:22px; font-weight:700; color: var(--navy);">${openRisks.length} <span style="font-size:14px; color: var(--red);">(${highRisks} high)</span></div>
+          </div>
+          <div style="border:1px solid var(--slate-200); padding:12px; border-radius:6px;">
+            <div style="font-size:10px; text-transform:uppercase; color: var(--slate-500); font-weight:700;">Pending Decisions</div>
+            <div style="font-size:22px; font-weight:700; color: var(--navy);">${pendingDecisions}</div>
+          </div>
+        </div>
+
+        <h3 style="color: var(--navy); margin-top: 18px;">The decision being automated</h3>
+        <p style="background: var(--slate-50); padding: 12px; border-left: 3px solid var(--navy);">${esc(c.decision) || '—'}</p>
+
+        <h3 style="color: var(--navy); margin-top: 18px;">Outcome being delivered</h3>
+        <p>${esc(c.outcome) || '—'}</p>
+
+        <h3 style="color: var(--navy); margin-top: 18px;">Decisions required from SteerCo</h3>
+        <p>${(w.decisions || '—').replace(/\n/g, '<br>')}</p>
+
+        <h3 style="color: var(--navy); margin-top: 18px;">Top risks (by severity)</h3>
+        ${openRisks.length === 0 ? '<p>No open risks.</p>' :
+          '<table style="width:100%; font-size:13px;">' + openRisks.sort((a,b)=>(b.severity==='High'?3:b.severity==='Medium'?2:1)-(a.severity==='High'?3:a.severity==='Medium'?2:1)).slice(0,5).map(r =>
+            `<tr><td style="padding:6px 0; border-bottom:1px solid var(--slate-200);"><strong>${esc(r.severity)}</strong></td><td>${esc(r.description)}</td><td>${esc(r.owner||'—')}</td></tr>`
+          ).join('') + '</table>'}
+
+        <h3 style="color: var(--navy); margin-top: 18px;">Next week priorities</h3>
+        <p>${(w.next || '—').replace(/\n/g, '<br>')}</p>
+
+        <p style="font-size: 11px; color: var(--slate-500); margin-top: 24px; border-top:1px solid var(--slate-200); padding-top: 12px;">
+          Generated by AI Program OS · ${new Date().toLocaleString('en-CA')}
+        </p>
+      </div>`;
+  },
+
+  copySteerCo() {
+    const txt = document.getElementById('steerco-content').innerText;
+    navigator.clipboard.writeText(txt).then(() => this.toast('Copied to clipboard.'));
+  },
+
+  // ---------- Export / Import ----------
+  exportAll() {
+    const json = JSON.stringify(this.data, null, 2);
+    download('ai-program-os-backup-' + new Date().toISOString().slice(0,10) + '.json', json, 'application/json');
+    this.toast('Data exported.');
+  },
+
+  exportRAID() {
+    const csv = ['Type,Description,Owner,Severity,Status,Action'].concat(
+      this.data.raid.map(r => [r.type, csvEsc(r.description), csvEsc(r.owner), r.severity, r.status, csvEsc(r.action)].join(','))
+    ).join('\n');
+    download('raid-' + new Date().toISOString().slice(0,10) + '.csv', csv, 'text/csv');
+  },
+
+  importAll() {
+    const file = document.getElementById('import-file').files[0];
+    if (!file) return alert('Choose a JSON file first.');
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (!confirm('Replace current data with imported file?')) return;
+        this.data = { ...this.data, ...parsed };
+        this.persist();
+        this.refresh(this.currentView);
+        this.toast('Data imported.');
+      } catch (err) { alert('Import failed: ' + err.message); }
+    };
+    reader.readAsText(file);
+  },
+
+  resetAll() {
+    if (!confirm('Delete ALL data? This cannot be undone.')) return;
+    this.data = { charter:{}, stakeholders:[], vendors:[], raid:[], decisions:[], scorecard:[], weekly:{} };
+    this.persist();
+    this.refresh('dashboard');
+    this.toast('All data cleared.');
+  }
+};
+
+// ---------- Helpers ----------
+function v(id) { return document.getElementById(id)?.value || ''; }
+function esc(s) { return (s||'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function csvEsc(s) { return '"' + (s||'').toString().replace(/"/g,'""') + '"'; }
+function download(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Toast
+OS.toast = function(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+};
+
+// ---------- Nav binding ----------
+document.querySelectorAll('.nav-item').forEach(n => {
+  n.addEventListener('click', () => OS.goto(n.dataset.view));
+});
+
+// ---------- Boot ----------
+OS.load();
+OS.goto('dashboard');
+</script>
+</body>
+</html>
